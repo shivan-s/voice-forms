@@ -1,27 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	let recognition: typeof window.SpeechRecognition | typeof window.webkitSpeechRecognition | null =
+		$state(null);
 	let recording = $state(false);
-	let result: string | null = $state(null);
-	let recognition: typeof window.SpeechRecognition | null = $state(null);
-	let error: string | null = $state(null);
+	let results: SpeechRecognitionResultList | null = $state(null);
 
 	onMount(() => {
 		try {
-			recognition = new window.SpeechRecognition();
+			recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
 		} catch (err) {
 			if (err instanceof TypeError) {
-				console.info('No SpeechRecogntion, check if webkitSpeechRecognition is available');
-				try {
-					recognition = new window.webkitSpeechRecognition();
-				} catch {
-					if (err instanceof TypeError) {
-						console.error('Speech Recognition Unavailable');
-						error = 'Speech Recognition not available';
-					} else {
-						throw err;
-					}
-				}
+				console.info('No SpeechRecogntion available');
 			} else {
 				throw err;
 			}
@@ -31,54 +21,66 @@
 			return;
 		}
 		recognition.continuous = true;
-		const handleResult = (e: SpeechRecognitionEvent) => {
-			result = e.results[0][0].transcript;
+		recognition.interimResults = true;
+		// recognition.start();
+		const handleEventResult = (e: SpeechRecognitionEvent) => {
+			results = e.results;
 		};
-		recognition.addEventListener('result', handleResult);
+		recognition.addEventListener('result', handleEventResult);
 		return () => {
 			if (recognition) {
-				recognition.removeEventListener('result', handleResult);
+				recognition.removeEventListener('result', handleEventResult);
 				recognition.abort();
 			}
 		};
 	});
 
 	const handleClick = () => {
-		if (!recognition) return;
+		if (!recognition) {
+			return;
+		}
 		if (recording) {
 			recording = false;
 			recognition.stop();
 		} else {
 			recording = true;
-			result = '';
 			recognition.start();
 		}
 	};
 </script>
 
-<h1>Voice Form Demo</h1>
-
-{#if error}
-	<p class="error">
-		{error}
-	</p>
+{#if !recognition}
+	<p class="error">No Speech Recognition Available</p>
+{:else}
+	{#if results}
+		{#each results as { isFinal, ...result }, i (i)}
+			{#each result as { transcript, confidence }, j (j)}
+				<p class:loading={isFinal}>
+					<strong>{i}</strong>:&nbsp;{transcript}<br />
+					{#if isFinal}
+						<small>Confidence: {Math.round(confidence * 100)}%</small>
+					{/if}
+				</p>
+				{#if isFinal && i + 1 === results.length}
+					<p>
+						<em>Please speak...</em>
+					</p>
+				{/if}
+			{/each}
+		{/each}
+	{:else}
+		<p>
+			<em>Nothing to show!</em>
+		</p>
+	{/if}
+	<button onclick={handleClick}>
+		{#if recording}
+			⏸️Click to Pause
+		{:else}
+			⏺️ Click to Record
+		{/if}
+	</button>
 {/if}
-
-<button disabled={!recognition} onclick={handleClick}>
-	{#if recording}
-		◼ Click to Stop
-	{:else}
-		🔴 Click to Record
-	{/if}
-</button>
-
-<p>
-	{#if result}
-		{result}
-	{:else}
-		<em>Please record audio.</em>
-	{/if}
-</p>
 
 <style>
 	p.error {
