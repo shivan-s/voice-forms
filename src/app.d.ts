@@ -8,6 +8,20 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+	interface Window {
+		SpeechRecognition: SpeechRecognition;
+		webkitSpeechRecognition: SpeechRecognition;
+	}
+}
+
+class SpeechRecognition {
+	constructor() {}
+	continuous: boolean;
+	start(): void;
+	stop(): void;
+	abort(): void;
+	addEventListener(): (s: 'result', e: (e: SpeechRecognitionEvent) => void) => void;
+	removeEventListener(): (s: 'result', e: (e: SpeechRecognitionEvent) => void) => void;
 }
 
 export {};

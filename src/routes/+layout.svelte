@@ -7,6 +7,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<title>Voice Form Demo</title>
 </svelte:head>
 
 {@render children()}
