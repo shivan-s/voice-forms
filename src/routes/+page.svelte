@@ -1,8 +1,54 @@
+<script module lang="ts">
+	interface SpeechRecognition {
+		/**
+		 * Returns and sets the language. Defaults to the HTML lang attribute value, or the user agent's language setting if not set.
+		 */
+		lang: string;
+		/**
+		 * Determine if a result is continous or if set to `false` will return a result after recording.
+		 * @default false
+		 */
+		continuous: boolean;
+		/**
+		 * Will return result even when recording if `true`.
+		 * @default false
+		 */
+		interimResults: boolean;
+		/**
+		 * Starts the speech recognition service, may prompt user for permission.
+		 */
+		start(): void;
+		/**
+		 * Stops the speech recognition service. If `countinous` is set to `false`, then the result is given.
+		 */
+		stop(): void;
+		/**
+		 * Aborts the speech service and terminates audio. No result is returned.
+		 */
+		abort(): void;
+		/**
+		 * Event listener providing a result.
+		 */
+		addEventListener(s: 'result', e: (e: SpeechRecognitionEvent) => void): void;
+		/**
+		 * Free resource
+		 */
+		removeEventListener(s: 'result', e: (e: SpeechRecognitionEvent) => void): void;
+	}
+	interface SpeechRecognitionConstructor {
+		new (): SpeechRecognition;
+	}
+
+	declare const window: {
+		SpeechRecognition: SpeechRecognitionConstructor;
+		webkitSpeechRecognition: SpeechRecognitionConstructor;
+	};
+</script>
+
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	let recognition: typeof window.SpeechRecognition | typeof window.webkitSpeechRecognition | null =
-		$state(null);
+	let recognition: SpeechRecognition | null = $state(null);
 	let recording = $state(false);
 	let results: SpeechRecognitionResultList | null = $state(null);
 
@@ -22,7 +68,6 @@
 		}
 		recognition.continuous = true;
 		recognition.interimResults = true;
-		// recognition.start();
 		const handleEventResult = (e: SpeechRecognitionEvent) => {
 			results = e.results;
 		};
@@ -35,7 +80,7 @@
 		};
 	});
 
-	const handleClick = () => {
+	const handleRecordClick = () => {
 		if (!recognition) {
 			return;
 		}
@@ -47,6 +92,9 @@
 			recognition.start();
 		}
 	};
+	const handleClearClick = () => {
+		results = null;
+	};
 </script>
 
 {#if !recognition}
@@ -55,7 +103,7 @@
 	{#if results}
 		{#each results as { isFinal, ...result }, i (i)}
 			{#each result as { transcript, confidence }, j (j)}
-				<p class:loading={isFinal}>
+				<p class:loading={!isFinal}>
 					<strong>{i}</strong>:&nbsp;{transcript}<br />
 					{#if isFinal}
 						<small>Confidence: {Math.round(confidence * 100)}%</small>
@@ -73,18 +121,24 @@
 			<em>Nothing to show!</em>
 		</p>
 	{/if}
-	<button onclick={handleClick}>
-		{#if recording}
-			⏸️Click to Pause
-		{:else}
-			⏺️ Click to Record
-		{/if}
-	</button>
+	<div>
+		<button onclick={handleRecordClick}>
+			{#if recording}
+				⏸️Click to Pause
+			{:else}
+				⏺️ Click to Record
+			{/if}
+		</button>
+		<button onclick={handleClearClick}> Clear </button>
+	</div>
 {/if}
 
 <style>
 	p.error {
 		color: red;
+	}
+	p.loading {
+		opacity: 0.8;
 	}
 	em {
 		color: grey;
