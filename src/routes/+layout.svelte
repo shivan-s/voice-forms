@@ -7,11 +7,11 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Voice Form Demo</title>
+	<title>Voice to Text Demo</title>
 </svelte:head>
 
 <header>
-	<h1>Voice Form Demo</h1>
+	<h1>Voice to Text Demo</h1>
 </header>
 <main>
 	{@render children()}
