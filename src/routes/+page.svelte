@@ -63,12 +63,13 @@
 			}
 		}
 		if (!recognition) {
-			console.log('No Speech recognition');
+			console.info('No Speech recognition');
 			return;
 		}
 		recognition.continuous = true;
 		recognition.interimResults = true;
 		const handleEventResult = (e: SpeechRecognitionEvent) => {
+			console.info(e);
 			results = e.results;
 		};
 		recognition.addEventListener('result', handleEventResult);
